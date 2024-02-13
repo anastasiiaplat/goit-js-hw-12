@@ -7,11 +7,15 @@ import axios from 'axios';
 const galleryContainer = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
 const loaderContainer = document.querySelector('.loader');
-const loadMoreBtn = document.querySelector('.load-more-btn');
+const loadMoreBtn = document.createElement('button'); 
+loadMoreBtn.classList.add('load-more-btn');
+loadMoreBtn.textContent = 'Load more';
+galleryContainer.after(loadMoreBtn); 
 
 const GALLERY_LINK = 'gallery-link';
 let currentPage = 1;
 let searchQuery = '';
+let totalHits = 0; 
 
 searchForm.addEventListener('submit', async function (event) {
   event.preventDefault();
@@ -28,7 +32,8 @@ searchForm.addEventListener('submit', async function (event) {
   try {
     const { data } = await fetchImages(searchQuery, currentPage);
     const { hits, total } = data;
-    
+    totalHits = total; 
+
     if (hits.length > 0) {
       const galleryHTML = hits.map(createGallery).join('');
       galleryContainer.innerHTML = galleryHTML;
@@ -66,6 +71,12 @@ loadMoreBtn.addEventListener('click', async function () {
       galleryContainer.innerHTML += galleryHTML;
       const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
       lightbox.refresh();
+
+      
+      window.scrollTo({
+        top: galleryContainer.offsetTop + galleryContainer.offsetHeight,
+        behavior: 'smooth',
+      });
     } else {
       loadMoreBtn.style.display = 'none';
     }
@@ -103,7 +114,7 @@ function toastSuccess(message) {
     message,
     backgroundColor: '#59A10D',
     progressBarColor: '#B5EA7C',
-    icon: 'icon-chek',
+    icon: 'icon-check', 
     ...toastOptions,
   });
 }
@@ -143,8 +154,26 @@ function createGallery({
         <div class="image-item">Views <span class="image-elem">${views}</span></div>
         <div class="image-item">Comments <span class="image-elem">${comments}</span></div>
         <div class="image-item">Downloads <span class="image-elem">${downloads}</span></div>
-  </figcaption>
-  </figure>
-</a>
+      </figcaption>
+    </figure>
+  </a>
 `;
 }
+
+
+function updateLoadMoreButton() {
+  if (totalHits > currentPage * 15) {
+    loadMoreBtn.style.display = 'block';
+  } else {
+    loadMoreBtn.style.display = 'none';
+  }
+}
+
+
+function updateLoadMoreButtonAfterSearch() {
+  currentPage = 1; 
+  updateLoadMoreButton();
+}
+
+
+updateLoadMoreButtonAfterSearch();
