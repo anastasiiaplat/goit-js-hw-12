@@ -12,10 +12,13 @@ loadMoreBtn.classList.add('load-more-btn');
 loadMoreBtn.textContent = 'Load more';
 galleryContainer.after(loadMoreBtn); 
 
-const GALLERY_LINK = 'gallery-link';
+const GALLERY_LINK = 'gallery-link'; 
+
 let currentPage = 1;
 let searchQuery = '';
-let totalHits = 0; 
+let totalHits = 0;
+
+loaderContainer.style.display = 'none'; 
 
 searchForm.addEventListener('submit', async function (event) {
   event.preventDefault();
@@ -32,7 +35,7 @@ searchForm.addEventListener('submit', async function (event) {
   try {
     const { data } = await fetchImages(searchQuery, currentPage);
     const { hits, total } = data;
-    totalHits = total; 
+    totalHits = total;
 
     if (hits.length > 0) {
       const galleryHTML = hits.map(createGallery).join('');
@@ -42,11 +45,8 @@ searchForm.addEventListener('submit', async function (event) {
       const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
       lightbox.refresh();
 
-      if (total > currentPage * 15) {
-        loadMoreBtn.style.display = 'block';
-      } else {
-        loadMoreBtn.style.display = 'none';
-      }
+      checkEndOfResults();
+      loaderContainer.style.display = 'none';
     } else {
       toastError('Sorry, there are no images matching your search query. Please try again!');
       loadMoreBtn.style.display = 'none';
@@ -54,9 +54,21 @@ searchForm.addEventListener('submit', async function (event) {
   } catch (error) {
     toastError(`Error fetching images: ${error}`);
   } finally {
-    loaderContainer.style.display = 'none';
+    loaderContainer.style.display = 'none'; 
   }
 });
+
+
+function scrollToGalleryHeight() {
+  const galleryItems = document.querySelectorAll('.gallery-image');
+  const galleryHeight = galleryItems.length > 0 ? galleryItems[0].offsetHeight * 2 : 0;
+
+  window.scrollTo({
+    top: galleryContainer.offsetTop + galleryHeight,
+    behavior: 'smooth',
+  });
+}
+
 
 loadMoreBtn.addEventListener('click', async function () {
   loaderContainer.style.display = 'block';
@@ -72,13 +84,10 @@ loadMoreBtn.addEventListener('click', async function () {
       const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
       lightbox.refresh();
 
-      
-      window.scrollTo({
-        top: galleryContainer.offsetTop + galleryContainer.offsetHeight,
-        behavior: 'smooth',
-      });
+      checkEndOfResults();
+      scrollToBottom();
     } else {
-      loadMoreBtn.style.display = 'none';
+      checkEndOfResults();
     }
   } catch (error) {
     toastError(`Error fetching more images: ${error}`);
@@ -114,8 +123,27 @@ function toastSuccess(message) {
     message,
     backgroundColor: '#59A10D',
     progressBarColor: '#B5EA7C',
-    icon: 'icon-check', 
+    icon: 'icon-check',
     ...toastOptions,
+  });
+}
+
+
+function checkEndOfResults() {
+  if (totalHits <= currentPage * 15) {
+    loadMoreBtn.style.display = 'none';
+    toastInfo("We're sorry, but you've reached the end of search results.");
+  } else {
+    loadMoreBtn.style.display = 'block';
+  }
+}
+
+
+function scrollToBottom() {
+  const lastGalleryItem = galleryContainer.lastElementChild;
+  window.scrollTo({
+    top: lastGalleryItem.offsetTop + lastGalleryItem.offsetHeight,
+    behavior: 'smooth',
   });
 }
 
@@ -147,7 +175,7 @@ function createGallery({
 }) {
   return `
   <a href="${largeImageURL}" class="${GALLERY_LINK}">
-     <figure>
+    <figure>
       <img src="${webformatURL}" alt="${tags}" class="gallery-image">
       <figcaption class="gallery__figcaption">
         <div class="image-item">Likes <span class="image-elem">${likes}</span></div>
@@ -159,21 +187,3 @@ function createGallery({
   </a>
 `;
 }
-
-
-function updateLoadMoreButton() {
-  if (totalHits > currentPage * 15) {
-    loadMoreBtn.style.display = 'block';
-  } else {
-    loadMoreBtn.style.display = 'none';
-  }
-}
-
-
-function updateLoadMoreButtonAfterSearch() {
-  currentPage = 1; 
-  updateLoadMoreButton();
-}
-
-
-updateLoadMoreButtonAfterSearch();
