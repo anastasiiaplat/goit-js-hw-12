@@ -7,18 +7,14 @@ import axios from 'axios';
 const galleryContainer = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
 const loaderContainer = document.querySelector('.loader');
-const loadMoreBtn = document.createElement('button'); 
-loadMoreBtn.classList.add('load-more-btn');
-loadMoreBtn.textContent = 'Load more';
-galleryContainer.after(loadMoreBtn); 
 
-const GALLERY_LINK = 'gallery-link'; 
+const GALLERY_LINK = 'gallery-link';
 
 let currentPage = 1;
 let searchQuery = '';
 let totalHits = 0;
 
-loaderContainer.style.display = 'none'; 
+loaderContainer.style.display = 'none';
 
 searchForm.addEventListener('submit', async function (event) {
   event.preventDefault();
@@ -46,55 +42,51 @@ searchForm.addEventListener('submit', async function (event) {
       lightbox.refresh();
 
       checkEndOfResults();
-      loaderContainer.style.display = 'none';
+      addLoadMoreButton(); // Додавання кнопки "Завантажити більше" після успішного отримання зображень
     } else {
       toastError('Sorry, there are no images matching your search query. Please try again!');
-      loadMoreBtn.style.display = 'none';
     }
   } catch (error) {
     toastError(`Error fetching images: ${error}`);
   } finally {
-    loaderContainer.style.display = 'none'; 
-  }
-});
-
-
-function scrollToGalleryHeight() {
-  const galleryItems = document.querySelectorAll('.gallery-image');
-  const galleryHeight = galleryItems.length > 0 ? galleryItems[0].offsetHeight * 2 : 0;
-
-  window.scrollTo({
-    top: galleryContainer.offsetTop + galleryHeight,
-    behavior: 'smooth',
-  });
-}
-
-
-loadMoreBtn.addEventListener('click', async function () {
-  loaderContainer.style.display = 'block';
-  currentPage++;
-
-  try {
-    const { data } = await fetchImages(searchQuery, currentPage);
-    const { hits } = data;
-
-    if (hits.length > 0) {
-      const galleryHTML = hits.map(createGallery).join('');
-      galleryContainer.innerHTML += galleryHTML;
-      const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
-      lightbox.refresh();
-
-      checkEndOfResults();
-      scrollToBottom();
-    } else {
-      checkEndOfResults();
-    }
-  } catch (error) {
-    toastError(`Error fetching more images: ${error}`);
-  } finally {
     loaderContainer.style.display = 'none';
   }
 });
+
+// Функція для додавання кнопки "Завантажити більше" після успішного отримання зображень
+function addLoadMoreButton() {
+  const loadMoreBtn = document.createElement('button');
+  loadMoreBtn.classList.add('load-more-btn');
+  loadMoreBtn.textContent = 'Load more';
+  galleryContainer.after(loadMoreBtn);
+
+  // Обробник для кнопки "Завантажити більше"
+  loadMoreBtn.addEventListener('click', async function () {
+    loaderContainer.style.display = 'block';
+    currentPage++;
+
+    try {
+      const { data } = await fetchImages(searchQuery, currentPage);
+      const { hits } = data;
+
+      if (hits.length > 0) {
+        const galleryHTML = hits.map(createGallery).join('');
+        galleryContainer.innerHTML += galleryHTML;
+        const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
+        lightbox.refresh();
+
+        checkEndOfResults();
+        scrollToBottom();
+      } else {
+        checkEndOfResults();
+      }
+    } catch (error) {
+      toastError(`Error fetching more images: ${error}`);
+    } finally {
+      loaderContainer.style.display = 'none';
+    }
+  });
+}
 
 const toastOptions = {
   titleColor: '#FFFFFF',
@@ -128,16 +120,15 @@ function toastSuccess(message) {
   });
 }
 
-
 function checkEndOfResults() {
   if (totalHits <= currentPage * 15) {
-    loadMoreBtn.style.display = 'none';
+    const loadMoreBtn = document.querySelector('.load-more-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.style.display = 'none';
+    }
     toastInfo("We're sorry, but you've reached the end of search results.");
-  } else {
-    loadMoreBtn.style.display = 'block';
   }
 }
-
 
 function scrollToBottom() {
   const lastGalleryItem = galleryContainer.lastElementChild;
