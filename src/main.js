@@ -126,7 +126,7 @@ function checkEndOfResults() {
     if (loadMoreBtn) {
       loadMoreBtn.style.display = 'none';
     }
-    toastInfo("We're sorry, but you've reached the end of search results.");
+    toastSuccess("We're sorry, but you've reached the end of search results.");
   }
 }
 
