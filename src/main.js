@@ -7,7 +7,7 @@ import axios from 'axios';
 const galleryContainer = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
 const loaderContainer = document.querySelector('.loader');
-let loadMoreBtn = document.querySelector('.load-more-btn');
+let loadMoreBtn; // Змінна для кнопки "Load more"
 
 const GALLERY_LINK = 'gallery-link';
 
@@ -42,8 +42,7 @@ searchForm.addEventListener('submit', async function (event) {
       const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
       lightbox.refresh();
 
-      checkEndOfResults();
-      addLoadMoreButton();
+      checkEndOfResults(); // Викликати перевірку в кінці завантаження даних
     } else {
       toastError('Sorry, there are no images matching your search query. Please try again!');
     }
@@ -54,40 +53,44 @@ searchForm.addEventListener('submit', async function (event) {
   }
 });
 
-function addLoadMoreButton() {
-  if (!loadMoreBtn) {
-    loadMoreBtn = document.createElement('button');
-    loadMoreBtn.classList.add('load-more-btn');
-    loadMoreBtn.textContent = 'Load more';
-    galleryContainer.after(loadMoreBtn);
+function createLoadMoreButton() {
+  loadMoreBtn = document.createElement('button');
+  loadMoreBtn.classList.add('load-more-btn');
+  loadMoreBtn.textContent = 'Load more';
+  galleryContainer.after(loadMoreBtn);
 
-    loadMoreBtn.addEventListener('click', loadMoreImages);
-  }
-  loadMoreBtn.style.display = 'block'; // Показуємо кнопку
+  loadMoreBtn.addEventListener('click', loadMoreImages);
 }
 
-async function loadMoreImages() {
+function loadMoreImages() {
   loaderContainer.style.display = 'block';
   currentPage++;
 
   try {
-    const { data } = await fetchImages(searchQuery, currentPage);
-    const { hits } = data;
+    fetchImages(searchQuery, currentPage)
+      .then(({ data }) => {
+        const { hits } = data;
 
-    if (hits.length > 0) {
-      const galleryHTML = hits.map(createGallery).join('');
-      galleryContainer.innerHTML += galleryHTML;
-      const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
-      lightbox.refresh();
+        if (hits.length > 0) {
+          const galleryHTML = hits.map(createGallery).join('');
+          galleryContainer.innerHTML += galleryHTML;
+          const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
+          lightbox.refresh();
 
-      checkEndOfResults();
-      scrollToBottom();
-    } else {
-      checkEndOfResults();
-    }
+          checkEndOfResults();
+          scrollToBottom();
+        } else {
+          checkEndOfResults();
+        }
+      })
+      .catch(error => {
+        toastError(`Error fetching more images: ${error}`);
+      })
+      .finally(() => {
+        loaderContainer.style.display = 'none';
+      });
   } catch (error) {
     toastError(`Error fetching more images: ${error}`);
-  } finally {
     loaderContainer.style.display = 'none';
   }
 }
@@ -126,8 +129,14 @@ function toastSuccess(message) {
 
 function checkEndOfResults() {
   if (totalHits <= currentPage * 15) {
-    loadMoreBtn.style.display = 'none'; // Ховаємо кнопку
-    toastSuccess("We're sorry, but you've reached the end of search results.");
+    if (loadMoreBtn) {
+      loadMoreBtn.style.display = 'none';
+    }
+    toastInfo("We're sorry, but you've reached the end of search results.");
+  } else {
+    if (!loadMoreBtn) {
+      createLoadMoreButton();
+    }
   }
 }
 
