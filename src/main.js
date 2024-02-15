@@ -7,7 +7,7 @@ import axios from 'axios';
 const galleryContainer = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
 const loaderContainer = document.querySelector('.loader');
-let loadMoreBtn = document.querySelector('.load-more-btn'); // Змінюємо на let для зміни значення
+let loadMoreBtn = document.querySelector('.load-more-btn');
 
 const GALLERY_LINK = 'gallery-link';
 
@@ -63,6 +63,7 @@ function addLoadMoreButton() {
 
     loadMoreBtn.addEventListener('click', loadMoreImages);
   }
+  loadMoreBtn.style.display = 'block'; // Показуємо кнопку
 }
 
 async function loadMoreImages() {
@@ -125,9 +126,7 @@ function toastSuccess(message) {
 
 function checkEndOfResults() {
   if (totalHits <= currentPage * 15) {
-    if (loadMoreBtn) {
-      loadMoreBtn.style.display = 'none';
-    }
+    loadMoreBtn.style.display = 'none'; // Ховаємо кнопку
     toastSuccess("We're sorry, but you've reached the end of search results.");
   }
 }
