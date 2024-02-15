@@ -7,13 +7,11 @@ import axios from 'axios';
 const galleryContainer = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
 const loaderContainer = document.querySelector('.loader');
-let loadMoreBtn; // Змінна для кнопки "Load more"
-
+let loadMoreBtn; 
 const GALLERY_LINK = 'gallery-link';
 
 let currentPage = 1;
 let searchQuery = '';
-let totalHits = 0;
 
 loaderContainer.style.display = 'none';
 
@@ -32,7 +30,6 @@ searchForm.addEventListener('submit', async function (event) {
   try {
     const { data } = await fetchImages(searchQuery, currentPage);
     const { hits, total } = data;
-    totalHits = total;
 
     if (hits.length > 0) {
       const galleryHTML = hits.map(createGallery).join('');
@@ -42,7 +39,7 @@ searchForm.addEventListener('submit', async function (event) {
       const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
       lightbox.refresh();
 
-      checkEndOfResults(); // Викликати перевірку в кінці завантаження даних
+      checkEndOfResults();
     } else {
       toastError('Sorry, there are no images matching your search query. Please try again!');
     }
@@ -78,7 +75,7 @@ function loadMoreImages() {
           lightbox.refresh();
 
           checkEndOfResults();
-          scrollToBottom();
+          scrollToLastGalleryItem();
         } else {
           checkEndOfResults();
         }
@@ -128,7 +125,8 @@ function toastSuccess(message) {
 }
 
 function checkEndOfResults() {
-  if (totalHits <= currentPage * 15) {
+  const totalHits = document.querySelectorAll('.gallery-image').length;
+  if (totalHits >= 75) {
     if (loadMoreBtn) {
       loadMoreBtn.style.display = 'none';
     }
@@ -140,7 +138,7 @@ function checkEndOfResults() {
   }
 }
 
-function scrollToBottom() {
+function scrollToLastGalleryItem() {
   const lastGalleryItem = galleryContainer.lastElementChild;
   window.scrollTo({
     top: lastGalleryItem.offsetTop + lastGalleryItem.offsetHeight,
