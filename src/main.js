@@ -7,15 +7,16 @@ import axios from 'axios';
 const galleryContainer = document.querySelector('.gallery');
 const searchForm = document.querySelector('.search-form');
 const loaderContainer = document.querySelector('.loader');
-let loadMoreBtn; 
+let loadMoreBtn;
 const GALLERY_LINK = 'gallery-link';
 
 let currentPage = 1;
 let searchQuery = '';
-
-
+let totalHits = 0;
 
 loaderContainer.style.display = 'none';
+
+const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
 
 searchForm.addEventListener('submit', async function (event) {
   event.preventDefault();
@@ -31,14 +32,14 @@ searchForm.addEventListener('submit', async function (event) {
 
   try {
     const { data } = await fetchImages(searchQuery, currentPage);
-    const { hits, totalHits } = data;
+    const { hits, total } = data;
+    totalHits = total;
 
     if (hits.length > 0) {
       const galleryHTML = hits.map(createGallery).join('');
       galleryContainer.innerHTML = galleryHTML;
       toastSuccess(`Was found: ${totalHits} images`);
-      searchForm.reset(); 
-      const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
+      searchForm.reset();
       lightbox.refresh();
 
       checkEndOfResults();
@@ -51,9 +52,6 @@ searchForm.addEventListener('submit', async function (event) {
     loaderContainer.style.display = 'none';
   }
 });
-
-
-
 
 function createLoadMoreButton() {
   loadMoreBtn = document.createElement('button');
@@ -76,11 +74,10 @@ function loadMoreImages() {
         if (hits.length > 0) {
           const galleryHTML = hits.map(createGallery).join('');
           galleryContainer.innerHTML += galleryHTML;
-          const lightbox = new SimpleLightbox(`.${GALLERY_LINK}`);
           lightbox.refresh();
 
           checkEndOfResults();
-          scrollToLastGalleryItem();
+          scrollToBottom();
         } else {
           checkEndOfResults();
         }
@@ -135,7 +132,7 @@ function checkEndOfResults() {
     if (loadMoreBtn) {
       loadMoreBtn.style.display = 'none';
     }
-    toastInfo("We're sorry, but you've reached the end of search results.");
+    toastSuccess("We're sorry, but you've reached the end of search results.");
   } else {
     if (!loadMoreBtn) {
       createLoadMoreButton();
@@ -143,8 +140,7 @@ function checkEndOfResults() {
   }
 }
 
-
-function scrollToLastGalleryItem() {
+function scrollToBottom() {
   const lastGalleryItem = galleryContainer.lastElementChild;
   window.scrollTo({
     top: lastGalleryItem.offsetTop + lastGalleryItem.offsetHeight,
