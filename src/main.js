@@ -23,13 +23,12 @@ searchForm.addEventListener('submit', async function (event) {
   searchQuery = event.target.elements.search.value.trim();
 
   if (searchQuery === '') {
-    return;
+    return 'We are sorry, but you have reached the end of search results.';
   }
 
   currentPage = 1;
   galleryContainer.innerHTML = '';
-  loaderContainer.style.display = 'block';
-
+  showLoader(); 
   try {
     const { data } = await fetchImages(searchQuery, currentPage);
     const { hits, total } = data;
@@ -49,9 +48,34 @@ searchForm.addEventListener('submit', async function (event) {
   } catch (error) {
     toastError(`Error fetching images: ${error}`);
   } finally {
-    loaderContainer.style.display = 'none';
+    hideLoader(); 
   }
 });
+
+async function loadMoreImages() {
+  loaderContainer.style.display = 'block';
+  currentPage++;
+
+  try {
+    const { data } = await fetchImages(searchQuery, currentPage);
+    const { hits } = data;
+
+    if (hits.length > 0) {
+      const galleryHTML = hits.map(createGallery).join('');
+      galleryContainer.insertAdjacentHTML('beforeend', galleryHTML);
+      lightbox.refresh();
+
+      checkEndOfResults();
+      scrollToBottom();
+    } else {
+      checkEndOfResults();
+    }
+  } catch (error) {
+    toastError(`Error fetching more images: ${error}`);
+  } finally {
+    loaderContainer.style.display = 'none';
+  }
+}
 
 function createLoadMoreButton() {
   loadMoreBtn = document.createElement('button');
@@ -60,38 +84,6 @@ function createLoadMoreButton() {
   galleryContainer.after(loadMoreBtn);
 
   loadMoreBtn.addEventListener('click', loadMoreImages);
-}
-
-function loadMoreImages() {
-  loaderContainer.style.display = 'block';
-  currentPage++;
-
-  try {
-    fetchImages(searchQuery, currentPage)
-      .then(({ data }) => {
-        const { hits } = data;
-
-        if (hits.length > 0) {
-          const galleryHTML = hits.map(createGallery).join('');
-          galleryContainer.innerHTML += galleryHTML;
-          lightbox.refresh();
-
-          checkEndOfResults();
-          scrollToBottom();
-        } else {
-          checkEndOfResults();
-        }
-      })
-      .catch(error => {
-        toastError(`Error fetching more images: ${error}`);
-      })
-      .finally(() => {
-        loaderContainer.style.display = 'none';
-      });
-  } catch (error) {
-    toastError(`Error fetching more images: ${error}`);
-    loaderContainer.style.display = 'none';
-  }
 }
 
 const toastOptions = {
@@ -124,6 +116,14 @@ function toastSuccess(message) {
     icon: 'icon-check',
     ...toastOptions,
   });
+}
+
+function showLoader() {
+  loaderContainer.style.display = 'block';
+}
+
+function hideLoader() {
+  loaderContainer.style.display = 'none';
 }
 
 function checkEndOfResults() {
