@@ -23,8 +23,9 @@ searchForm.addEventListener('submit', async function (event) {
   searchQuery = event.target.elements.search.value.trim();
 
   if (searchQuery === '') {
-    return 'We are sorry, but you have reached the end of search results.';
-  }
+  toastError('Please enter a search query');
+  return;
+}
 
   currentPage = 1;
   galleryContainer.innerHTML = '';
@@ -63,6 +64,7 @@ async function loadMoreImages() {
     if (hits.length > 0) {
       const galleryHTML = hits.map(createGallery).join('');
       galleryContainer.insertAdjacentHTML('beforeend', galleryHTML);
+      
       lightbox.refresh();
 
       checkEndOfResults();
