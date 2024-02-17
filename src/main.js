@@ -23,13 +23,13 @@ searchForm.addEventListener('submit', async function (event) {
   searchQuery = event.target.elements.search.value.trim();
 
   if (searchQuery === '') {
-  toastError('Please enter a search query');
-  return;
-}
+    toastError("Please enter a search query.");
+    return;
+  }
 
   currentPage = 1;
   galleryContainer.innerHTML = '';
-  showLoader(); 
+  showLoader();
   try {
     const { data } = await fetchImages(searchQuery, currentPage);
     const { hits, total } = data;
@@ -49,12 +49,12 @@ searchForm.addEventListener('submit', async function (event) {
   } catch (error) {
     toastError(`Error fetching images: ${error}`);
   } finally {
-    hideLoader(); 
+    hideLoader();
   }
 });
 
 async function loadMoreImages() {
-  loaderContainer.style.display = 'block';
+  showLoader();
   currentPage++;
 
   try {
@@ -75,7 +75,7 @@ async function loadMoreImages() {
   } catch (error) {
     toastError(`Error fetching more images: ${error}`);
   } finally {
-    loaderContainer.style.display = 'none';
+    hideLoader();
   }
 }
 
